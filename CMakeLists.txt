@@ -5,10 +5,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(JobScheduler STATIC
-        app/Demo.cpp
+        src/Temporary.cpp
 ) # command, make the project as a static library and need at least one source file to compile
 
 target_include_directories(JobScheduler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/) # command, makes the JobScheduler as a public directory to include headers using same name
+
+# creating a executable for demo app
+add_executable(Demo app/Demo.cpp)
+target_link_libraries(Demo PRIVATE JobScheduler)
 
 # Fetch GoogleTest
 include(FetchContent)
