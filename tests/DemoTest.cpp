@@ -8,3 +8,9 @@ TEST(TemporaryTest, OnePlusTwo)
 {
     ASSERT_TRUE(1 + 2 == 3);
 }
+
+TEST(TemporaryTest, CheckingWarningPipeline)
+{
+    int ID;
+    ASSERT_TRUE(1 - 1 == ID);
+}
