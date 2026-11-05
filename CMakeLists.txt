@@ -12,6 +12,15 @@ else ()
     target_compile_options(JobSchedulerWarnings INTERFACE -Wall -Wextra -Wpedantic)
 endif ()
 
+option(JOBSCHEDULER_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
+if(JOBSCHEDULER_WARNINGS_AS_ERRORS)
+    if(MSVC)
+        target_compile_options(JobSchedulerWarnings INTERFACE /WX)
+    else()
+        target_compile_options(JobSchedulerWarnings INTERFACE -Werror)
+    endif()
+endif()
+
 add_library(JobScheduler STATIC
         src/Temporary.cpp
 ) # command, make the project as a static library and need at least one source file to compile
