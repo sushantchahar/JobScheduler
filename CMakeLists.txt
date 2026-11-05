@@ -7,7 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Enable compiler warnings for targets. Exclude googletests as warnings are for only the code which ownership is ours
 add_library(JobSchedulerWarnings INTERFACE)
 if (MSVC)
-    target_compile_options(JobSchedulerWarnings INTERFACE /w4 /permissive-)
+    target_compile_options(JobSchedulerWarnings INTERFACE /W4 /permissive-)
 else ()
     target_compile_options(JobSchedulerWarnings INTERFACE -Wall -Wextra -Wpedantic)
 endif ()
