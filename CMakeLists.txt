@@ -4,6 +4,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Enable compiler warnings for targets. Exclude googletests as warnings are for only the code which ownership is ours
+add_library(JobSchedulerWarnings INTERFACE)
+if (MSVC)
+    target_compile_options(JobSchedulerWarnings INTERFACE /w4 /permissive-)
+else ()
+    target_compile_options(JobSchedulerWarnings INTERFACE -Wall -Wextra -Wpedantic)
+endif ()
+
 add_library(JobScheduler STATIC
         src/Temporary.cpp
 ) # command, make the project as a static library and need at least one source file to compile
@@ -31,6 +39,11 @@ add_executable(Tests tests/DemoTest.cpp)
 
 # Link test executable with library and GTest
 target_link_libraries(Tests PRIVATE JobScheduler GTest::gtest_main)
+
+# Linking all targets with JobSchedulerWarnings
+target_link_libraries(JobScheduler PRIVATE JobSchedulerWarnings)
+target_link_libraries(Demo PRIVATE JobSchedulerWarnings)
+target_link_libraries(Tests PRIVATE JobSchedulerWarnings)
 
 # Enable ctest
 enable_testing()
