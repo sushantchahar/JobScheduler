@@ -46,7 +46,10 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # Add test executables
-add_executable(Tests tests/DemoTest.cpp)
+add_executable(Tests
+    tests/DemoTest.cpp
+    tests/JobIdTest.cpp
+)
 
 # Link test executable with library and GTest
 target_link_libraries(Tests PRIVATE JobScheduler GTest::gtest_main)
