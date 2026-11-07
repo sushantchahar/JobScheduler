@@ -6,10 +6,10 @@
 class JobId
 {
 private:
-    uint64_t Value;
+    std::uint64_t Value;
 
 public:
-    explicit JobId(uint64_t value) : Value(value) {}
+    explicit JobId(std::uint64_t value) : Value(value) {}
     auto operator<=>(const JobId&) const = default;
 };
 
