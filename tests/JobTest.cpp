@@ -38,7 +38,7 @@ TEST(JobTest, EmptyCallableThrowsInvalidArgument)
  JobId jobid(1);
  EPriority Priority = EPriority::High;
  std::function<void()> callable; // empty callable
- Job job(jobid, JobName, Priority, callable);
+ EXPECT_THROW(Job(jobid, JobName, Priority, callable), std::invalid_argument);
 }
 
 TEST(JobTest, ValidTransitionChangesState)
