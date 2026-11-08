@@ -22,7 +22,6 @@ if(JOBSCHEDULER_WARNINGS_AS_ERRORS)
 endif()
 
 add_library(JobScheduler STATIC
-        src/Temporary.cpp
         src/Job.cpp
         src/JobState.cpp
 ) # command, make the project as a static library and need at least one source file to compile
@@ -47,7 +46,6 @@ FetchContent_MakeAvailable(googletest)
 
 # Add test executables
 add_executable(Tests
-    tests/DemoTest.cpp
     tests/JobIdTest.cpp
     tests/JobStateTest.cpp
 )
