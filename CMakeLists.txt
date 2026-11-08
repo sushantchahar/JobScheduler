@@ -49,6 +49,7 @@ add_executable(Tests
     tests/JobIdTest.cpp
     tests/JobStateTest.cpp
     tests/JobTest.cpp
+    tests/PriorityTest.cpp
 )
 
 # Link test executable with library and GTest
