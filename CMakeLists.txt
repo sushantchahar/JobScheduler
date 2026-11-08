@@ -49,6 +49,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(Tests
     tests/DemoTest.cpp
     tests/JobIdTest.cpp
+    tests/JobStateTest.cpp
 )
 
 # Link test executable with library and GTest
