@@ -22,7 +22,8 @@ if(JOBSCHEDULER_WARNINGS_AS_ERRORS)
 endif()
 
 add_library(JobScheduler STATIC
-        src/Temporary.cpp
+        src/Job.cpp
+        src/JobState.cpp
 ) # command, make the project as a static library and need at least one source file to compile
 
 target_include_directories(JobScheduler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/) # command, makes the JobScheduler as a public directory to include headers using same name
@@ -44,7 +45,12 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # Add test executables
-add_executable(Tests tests/DemoTest.cpp)
+add_executable(Tests
+    tests/JobIdTest.cpp
+    tests/JobStateTest.cpp
+    tests/JobTest.cpp
+    tests/PriorityTest.cpp
+)
 
 # Link test executable with library and GTest
 target_link_libraries(Tests PRIVATE JobScheduler GTest::gtest_main)
