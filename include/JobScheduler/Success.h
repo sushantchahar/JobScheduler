@@ -1,0 +1,9 @@
+#ifndef JOBSCHEDULER_SUCCESS_H
+#define JOBSCHEDULER_SUCCESS_H
+
+struct Success
+{
+
+};
+
+#endif //JOBSCHEDULER_SUCCESS_H

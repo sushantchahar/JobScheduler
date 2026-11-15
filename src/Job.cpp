@@ -1,7 +1,9 @@
 #include <stdexcept>
 #include <JobScheduler/Job.h>
+#include <cassert>
+#include <utility>
 
-Job::Job(JobId id, std::string name, EPriority priority, std::function<void()> callable) :
+Job::Job(JobId id, std::string name, EPriority priority, std::function<Result<Success>()> callable) :
 Id(id),
 Name(std::move(name)),
 Priority(priority),
@@ -32,6 +34,27 @@ EJobState Job::GetState() const
 
 bool Job::TryTransition(EJobState NewState)
 {
-    bool Result = State.TryTransition(NewState);
-    return Result;
+    return State.TryTransition(NewState);
+}
+
+Result<Success> Job::Invoke() const
+{
+    assert(State.GetState() == EJobState::Running);
+    return Callable();
+}
+
+void Job::Complete(Result<Success> result)
+{
+    assert(State.GetState() == EJobState::Running);
+    Outcome = std::move(result);
+    const EJobState Target = (Outcome->IsOk()) ? EJobState::Succeeded : EJobState::Failed;
+    const bool IsExecuted = TryTransition(Target);
+    assert(IsExecuted);
+    (void)IsExecuted;
+}
+
+const Result<Success>& Job::GetOutcome() const
+{
+    assert(Outcome.has_value());
+    return *Outcome;
 }

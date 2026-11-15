@@ -21,7 +21,12 @@
 
 TEST(JobStateTest, IsDefaultJobStateIsCreated)
 {
- std::function<void()> callable = [] () -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  JobId id(1);
  Job job(id, "PrintWork", EPriority::Normal, callable);
  EJobState CurrentState = job.GetState();
@@ -30,7 +35,12 @@ TEST(JobStateTest, IsDefaultJobStateIsCreated)
 
 TEST(JobStateTest, IsValidTransition)
 {
- std::function<void()> callable = [] () -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  JobId id(1);
  Job job(id, "PrintWork", EPriority::Normal, callable);
 
