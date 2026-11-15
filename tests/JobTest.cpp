@@ -186,3 +186,58 @@ TEST(JobTest, InvokeOnNonRunningJobAsserts)
  EXPECT_DEBUG_DEATH((void)job.Invoke(), "");
 }
 #endif
+
+TEST(JobTest, CompleteWithSuccessMovedToSucceeded)
+{
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [] ()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_TRUE(job.TryTransition(EJobState::Pending));
+ EXPECT_TRUE(job.TryTransition(EJobState::Running));
+ auto result = job.Invoke();
+ job.Complete(result);
+ EXPECT_EQ(job.GetState(), EJobState::Succeeded);
+}
+
+TEST(JobTest, CompleteWithErrorMovesToFailed)
+{
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [] ()
+ {
+  Error error{EErrorCode::JobFailed, "File not found"};
+  Result<Success> result(error);
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_TRUE(job.TryTransition(EJobState::Pending));
+ EXPECT_TRUE(job.TryTransition(EJobState::Running));
+ auto result = job.Invoke();
+ job.Complete(result);
+ EXPECT_EQ(job.GetState(), EJobState::Failed);
+}
+
+#ifndef NDEBUG
+TEST(JobTest, CompleteOnNonRunningJobAsserts)
+{
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [] ()
+ {
+  Error error{EErrorCode::JobFailed, "File not found"};
+  Result<Success> result(error);
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_DEBUG_DEATH(job.Complete(Result<Success>(Success{})), "");
+}
+#endif
