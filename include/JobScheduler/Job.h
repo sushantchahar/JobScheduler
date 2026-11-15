@@ -24,6 +24,7 @@ public:
     EPriority GetPriority() const;
     EJobState GetState() const;
     [[nodiscard]] bool TryTransition(EJobState NewState);
+    Result<Success> Invoke() const;
 };
 
 #endif //JOBSCHEDULER_JOB_H

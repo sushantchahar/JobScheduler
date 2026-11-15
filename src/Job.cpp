@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <JobScheduler/Job.h>
+#include <cassert>
 
 Job::Job(JobId id, std::string name, EPriority priority, std::function<Result<Success>()> callable) :
 Id(id),
@@ -33,4 +34,10 @@ EJobState Job::GetState() const
 bool Job::TryTransition(EJobState NewState)
 {
     return State.TryTransition(NewState);
+}
+
+Result<Success> Job::Invoke() const
+{
+    assert(State.GetState() == EJobState::Running);
+    return Callable();
 }

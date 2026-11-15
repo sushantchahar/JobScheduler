@@ -11,6 +11,7 @@
 #include <string>
 #include <functional>
 #include <stdexcept>
+#include <type_traits>
 
 TEST(JobTest, StoresIdNameAndPriority)
 {
@@ -125,3 +126,63 @@ TEST(JobTest, EndStateCannotMove)
  EXPECT_TRUE(job.TryTransition(EJobState::Succeeded));
  EXPECT_FALSE(job.TryTransition(EJobState::Running));
 }
+
+TEST(JobTest, InvokeReturnsSuccessResult)
+{
+ bool flag = false;
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [&flag] ()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  flag = true;
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_TRUE(job.TryTransition(EJobState::Pending));
+ EXPECT_TRUE(job.TryTransition(EJobState::Running));
+ // before calling invoke flag == false?
+ EXPECT_FALSE(flag);
+ auto result = job.Invoke();
+ EXPECT_TRUE(flag);
+ EXPECT_TRUE(result.IsOk());
+}
+
+TEST(JobTest, InvokePassesThroughErrorUnchanged)
+{
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [] ()
+ {
+  Error error{EErrorCode::JobFailed, "File not found"};
+  Result<Success> result(error);
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_TRUE(job.TryTransition(EJobState::Pending));
+ EXPECT_TRUE(job.TryTransition(EJobState::Running));
+ auto result = job.Invoke();
+ EXPECT_FALSE(result.IsOk());
+ EXPECT_EQ(result.GetError().Code, EErrorCode::JobFailed);
+ EXPECT_EQ(result.GetError().Message, "File not found");
+}
+
+#ifndef NDEBUG
+TEST(JobTest, InvokeOnNonRunningJobAsserts)
+{
+ std::string JobName = "PrintReport";
+ JobId jobid(1);
+ EPriority Priority = EPriority::High;
+ std::function<Result<Success>()> callable = [] ()
+ {
+  Error error{EErrorCode::JobFailed, "File not found"};
+  Result<Success> result(error);
+  return result;
+ };
+ Job job(jobid, JobName, Priority, callable);
+ EXPECT_DEBUG_DEATH((void)job.Invoke(), "");
+}
+#endif
