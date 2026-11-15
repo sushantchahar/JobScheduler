@@ -52,3 +52,9 @@ void Job::Complete(Result<Success> result)
     assert(IsExecuted);
     (void)IsExecuted;
 }
+
+const Result<Success>& Job::GetOutcome() const
+{
+    assert(Outcome.has_value());
+    return *Outcome;
+}

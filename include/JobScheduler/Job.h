@@ -28,6 +28,7 @@ public:
     [[nodiscard]] bool TryTransition(EJobState NewState);
     Result<Success> Invoke() const;
     void Complete(Result<Success> result);
+    const Result<Success>& GetOutcome() const;
 };
 
 #endif //JOBSCHEDULER_JOB_H
