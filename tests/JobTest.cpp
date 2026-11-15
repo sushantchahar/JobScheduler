@@ -6,14 +6,23 @@
 #include <JobScheduler/EPriority.h>
 #include <JobScheduler/JobId.h>
 #include <JobScheduler/Job.h>
+#include <JobScheduler/Result.h>
+#include <JobScheduler/Success.h>
 #include <string>
+#include <functional>
+#include <stdexcept>
 
 TEST(JobTest, StoresIdNameAndPriority)
 {
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  EXPECT_EQ(job.GetId(), jobid);
@@ -26,7 +35,12 @@ TEST(JobTest, StartsInCreatedState)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  EXPECT_EQ(job.GetState(), EJobState::Created);
@@ -37,7 +51,7 @@ TEST(JobTest, EmptyCallableThrowsInvalidArgument)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable; // empty callable
+ std::function<Result<Success>()> callable; // empty callable
  EXPECT_THROW(Job(jobid, JobName, Priority, callable), std::invalid_argument);
 }
 
@@ -46,7 +60,12 @@ TEST(JobTest, ValidTransitionChangesState)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  bool result = job.TryTransition(EJobState::Pending);
@@ -59,7 +78,12 @@ TEST(JobTest, InvalidTransitionRejected)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  EXPECT_FALSE(job.TryTransition(EJobState::Running));
@@ -70,7 +94,12 @@ TEST(JobTest, ValidTransitionChainWorks)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  EXPECT_TRUE(job.TryTransition(EJobState::Pending));
@@ -83,7 +112,12 @@ TEST(JobTest, EndStateCannotMove)
  std::string JobName = "PrintReport";
  JobId jobid(1);
  EPriority Priority = EPriority::High;
- std::function<void()> callable = []() -> void {return;};
+ std::function<Result<Success>()> callable = []()
+ {
+  Success succ;
+  Result<Success> result(succ);
+  return result;
+ };
  Job job(jobid, JobName, Priority, callable);
 
  EXPECT_TRUE(job.TryTransition(EJobState::Pending));

@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <JobScheduler/Job.h>
 
-Job::Job(JobId id, std::string name, EPriority priority, std::function<void()> callable) :
+Job::Job(JobId id, std::string name, EPriority priority, std::function<Result<Success>()> callable) :
 Id(id),
 Name(std::move(name)),
 Priority(priority),
@@ -32,6 +32,5 @@ EJobState Job::GetState() const
 
 bool Job::TryTransition(EJobState NewState)
 {
-    bool Result = State.TryTransition(NewState);
-    return Result;
+    return State.TryTransition(NewState);
 }
