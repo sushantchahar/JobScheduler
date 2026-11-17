@@ -12,10 +12,10 @@
 class Job
 {
 private:
-    const JobId Id;
-    const std::string Name;
+    JobId Id;
+    std::string Name;
     JobState State;
-    const EPriority Priority;
+    EPriority Priority;
     std::function<Result<Success>()> Callable;
     std::optional<Result<Success>> Outcome;
 
