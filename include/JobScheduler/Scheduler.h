@@ -35,12 +35,15 @@ private:
     uint64_t JobIdCounter = 0;
     std::unordered_map<JobId, Record> records;
 
+    static Result<Success> RunJob(Job& job);
+
 public:
     Scheduler() = default;
     Scheduler(const Scheduler&) = delete;
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler(Scheduler&&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
+    bool RunNext();
 
     Result<JobHandle> Submit(SubmitSpecs specs);
 };
