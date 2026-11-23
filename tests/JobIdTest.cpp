@@ -45,3 +45,27 @@ TEST(JobIdTest, SmallestValidId)
  constexpr std::uint64_t MinValue = std::numeric_limits<std::uint64_t>::min();
  EXPECT_GE(JobId(MinValue), JobId(0));
 }
+
+TEST(JobIdTest, EqualIdHashEqually)
+{
+ JobId id1(1);
+ JobId id2(1);
+ EXPECT_EQ(id1, id2);
+}
+
+TEST(JobIdTest, WorksAsUnorderedMapKey)
+{
+ std::unordered_map<JobId, int> map;
+ JobId id1(5);
+ map.emplace(id1, 42);
+ JobId id2(5);
+ auto a = map.find(id2);
+ EXPECT_EQ(a->second, 42);
+}
+
+TEST(JobIdTest, DifferentIdsAreDistinctKeys)
+{
+ JobId id1(5);
+ JobId id2(10);
+ EXPECT_FALSE(id1 == id2);
+}

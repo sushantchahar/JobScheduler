@@ -5,7 +5,8 @@
 enum class EErrorCode : std::uint8_t
 {
     JobFailed,
-    Exception
+    Exception,
+    InvalidArgument
 };
 
 #endif //JOBSCHEDULER_EERRORCODE_H
