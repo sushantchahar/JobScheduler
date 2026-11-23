@@ -27,6 +27,7 @@ add_library(JobScheduler STATIC
         src/Error.cpp
         src/JobQueue.cpp
         src/Scheduler.cpp
+        src/JobHandle.cpp
 ) # command, make the project as a static library and need at least one source file to compile
 
 target_include_directories(JobScheduler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/) # command, makes the JobScheduler as a public directory to include headers using same name

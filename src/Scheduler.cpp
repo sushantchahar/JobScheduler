@@ -30,6 +30,14 @@ Result<Success> Scheduler::RunJob(Job& job)
     }
 }
 
+const Scheduler::Record& Scheduler::FindRecord(JobId id) const
+{
+    auto it = records.find(id);
+    assert(it != records.end());
+
+    return it->second;
+}
+
 bool Scheduler::RunNext()
 {
     auto job = jobQueue.Pop();

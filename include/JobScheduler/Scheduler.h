@@ -21,6 +21,7 @@ struct SubmitSpecs
 
 class Scheduler
 {
+    friend class JobHandle;
 private:
     struct Record
     {
@@ -36,6 +37,7 @@ private:
     std::unordered_map<JobId, Record> records;
 
     static Result<Success> RunJob(Job& job);
+    [[nodiscard]] const Record& FindRecord(JobId id) const;
 
 public:
     Scheduler() = default;
