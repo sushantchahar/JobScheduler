@@ -46,6 +46,7 @@ public:
     Scheduler(Scheduler&&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
     bool RunNext();
+    size_t RunAll();
 
     Result<JobHandle> Submit(SubmitSpecs specs);
 };

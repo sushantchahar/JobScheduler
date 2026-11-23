@@ -56,3 +56,14 @@ bool Scheduler::RunNext()
     record.Outcome = job->GetOutcome();
     return true;
 }
+
+size_t Scheduler::RunAll()
+{
+    std::size_t ExecutedJobCounter = 0;
+    while (RunNext())
+    {
+        ++ExecutedJobCounter;
+    }
+
+    return ExecutedJobCounter;
+}

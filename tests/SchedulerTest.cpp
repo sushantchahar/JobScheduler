@@ -7,6 +7,36 @@
 #include <stdexcept>
 #include <string>
 
+namespace
+{
+    SubmitSpecs MakeOkSpecs(std::string name = "Ok",
+                            EPriority priority = EPriority::Normal)
+    {
+        return SubmitSpecs{std::move(name), priority,
+            [] () -> Result<Success> { return Success{}; }};
+    }
+
+    SubmitSpecs MakeFailingSpecs(std::string name = "Failing",
+                                 EPriority priority = EPriority::Normal)
+    {
+        return SubmitSpecs{std::move(name), priority,
+            [] () -> Result<Success>
+            { return Error{EErrorCode::JobFailed, "failed"}; }};
+    }
+
+    SubmitSpecs MakeRecordingSpecs(std::vector<std::string>& order,
+                                   std::string name,
+                                   EPriority priority = EPriority::Normal)
+    {
+        return SubmitSpecs{name, priority,
+            [&order, name] () -> Result<Success>
+            {
+                order.push_back(name);
+                return Success{};
+            }};
+    }
+}
+
 TEST(SchedulerTest, ValidSubmitReturnsHandle)
 {
     std::function<Result<Success>()> callable = [] () -> Result<Success>
@@ -266,4 +296,72 @@ TEST(SchedulerTest, FailedJobsReportTheirOutcome)
     EXPECT_EQ(handle3.State(), EJobState::Failed);
 
     EXPECT_FALSE(scheduler.RunNext());
+}
+
+TEST(SchedulerTest, RunAllOnEmptyQueueReturnsZero)
+{
+    Scheduler scheduler;
+    EXPECT_EQ(scheduler.RunAll(), 0u);
+}
+
+TEST(SchedulerTest, RunAllRunsEveryJobAndReturnsCount)
+{
+    Scheduler scheduler;
+    auto r1 = scheduler.Submit(MakeOkSpecs("A"));
+    auto r2 = scheduler.Submit(MakeOkSpecs("B"));
+    auto r3 = scheduler.Submit(MakeOkSpecs("C"));
+    ASSERT_TRUE(r1.IsOk());
+    ASSERT_TRUE(r2.IsOk());
+    ASSERT_TRUE(r3.IsOk());
+
+    EXPECT_EQ(scheduler.RunAll(), 3u);
+
+    for (const auto& r : {r1, r2, r3})
+    {
+        auto handle = r.GetValue();
+        EXPECT_TRUE(handle.IsFinished());
+        EXPECT_EQ(handle.State(), EJobState::Succeeded);
+    }
+
+    EXPECT_EQ(scheduler.RunAll(), 0u);
+}
+
+TEST(SchedulerTest, RunAllRunsInPriorityOrder)
+{
+    std::vector<std::string> order;
+    Scheduler scheduler;
+
+    ASSERT_TRUE(scheduler.Submit(MakeRecordingSpecs(order, "Low", EPriority::Low)).IsOk());
+    ASSERT_TRUE(scheduler.Submit(MakeRecordingSpecs(order, "High1", EPriority::High)).IsOk());
+    ASSERT_TRUE(scheduler.Submit(MakeRecordingSpecs(order, "Normal", EPriority::Normal)).IsOk());
+    ASSERT_TRUE(scheduler.Submit(MakeRecordingSpecs(order, "High2", EPriority::High)).IsOk());
+
+    EXPECT_EQ(scheduler.RunAll(), 4u);
+
+    const std::vector<std::string> expected{"High1", "High2", "Normal", "Low"};
+    EXPECT_EQ(order, expected);
+}
+
+TEST(SchedulerTest, RunAllContinuesPastFailures)
+{
+    std::vector<std::string> order;
+    Scheduler scheduler;
+
+    auto r1 = scheduler.Submit(MakeRecordingSpecs(order, "First"));
+    auto r2 = scheduler.Submit(MakeFailingSpecs("Bad"));
+    auto r3 = scheduler.Submit(MakeRecordingSpecs(order, "Last"));
+    ASSERT_TRUE(r1.IsOk());
+    ASSERT_TRUE(r2.IsOk());
+    ASSERT_TRUE(r3.IsOk());
+
+    EXPECT_EQ(scheduler.RunAll(), 3u);
+
+    const std::vector<std::string> expected{"First", "Last"};
+    EXPECT_EQ(order, expected);
+
+    EXPECT_EQ(r1.GetValue().State(), EJobState::Succeeded);
+    EXPECT_EQ(r2.GetValue().State(), EJobState::Failed);
+    EXPECT_EQ(r3.GetValue().State(), EJobState::Succeeded);
+
+    EXPECT_EQ(scheduler.RunAll(), 0u);
 }
