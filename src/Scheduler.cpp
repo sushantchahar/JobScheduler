@@ -40,7 +40,7 @@ const Scheduler::Record& Scheduler::FindRecord(JobId id) const
 
 bool Scheduler::RunNext()
 {
-    auto job = jobQueue.Pop();
+    auto job = jobQueue.TryPop();
     if (!job) return false;
 
     [[maybe_unused]] const bool IsMoved = job->TryTransition(EJobState::Running);

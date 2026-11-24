@@ -5,6 +5,8 @@
 #include <JobScheduler/Job.h>
 #include <optional>
 #include <cstddef>
+#include <mutex>
+#include <condition_variable>
 
 struct Entry
 {
@@ -29,11 +31,16 @@ class JobQueue
 private:
     std::vector<Entry> Heap;
     uint64_t NextSequence = 0;
+    mutable std::mutex QueueMutex;
+    std::condition_variable QueueCondition;
+
+    std::optional<Job> PopLocked();
 
 public:
     void Push(Job&& job);
+    std::optional<Job> TryPop();
     std::optional<Job> Pop();
-    std::size_t Size() const;
+    [[nodiscard]] std::size_t Size() const;
     [[nodiscard]] bool Empty() const;
 };
 
