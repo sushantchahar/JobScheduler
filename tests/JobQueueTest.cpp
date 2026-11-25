@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include <JobScheduler/JobQueue.h>
 #include <JobScheduler/Job.h>
+#include <thread>
+#include <chrono>
+#include <set>
 
 TEST(JobQueueTest, EmptyQueue)
 {
@@ -248,4 +251,60 @@ TEST(JobQueueTest, SameSequenceFifoOrderFollowedAfterPoppedAndPush)
     ASSERT_EQ(poppedjob->GetId(), JobId(3));
     poppedjob = queue.TryPop();
     ASSERT_EQ(poppedjob->GetId(), JobId(4));
+}
+
+TEST(JobQueueConcurrencyTest, ManyProducersOneConsumerNoLostJobs)
+{
+    const int PRODUCERS = 4;
+    const int JOBS_PER_PRODUCER = 1000;
+    JobQueue JQueue;
+    std::set<JobId> result;
+    {
+        std::vector<std::jthread> producers;
+        for (int i = 1; i <= PRODUCERS; i++)
+        {
+            std::jthread producer([&JQueue, i]()
+            {
+                for (int j = 1; j <= JOBS_PER_PRODUCER; j++)
+                {
+                    JobId id(i * JOBS_PER_PRODUCER + j);
+                    Job job(id, "PrintName", EPriority::Normal, [](){return Success{};});
+                    JQueue.Push(std::move(job));
+                }
+            });
+            producers.emplace_back(std::move(producer));
+        }
+
+        for (int i = 1; i <= PRODUCERS * JOBS_PER_PRODUCER; i++)
+        {
+            auto job = JQueue.Pop();
+            ASSERT_TRUE(job.has_value());
+            result.emplace(job->GetId());
+        }
+    }
+    EXPECT_EQ(result.size(), static_cast<size_t>(PRODUCERS * JOBS_PER_PRODUCER));
+    EXPECT_TRUE(JQueue.Empty());
+}
+
+TEST(JobQueueConcurrencyTest, PopWakesWhenJobIsPushed)
+{
+    JobQueue queue;
+    std::vector<JobId> result;
+    {
+        std::jthread consumer([&queue, &result]()
+        {
+            auto job = queue.Pop();
+            ASSERT_TRUE(job.has_value());
+            result.push_back(job->GetId());
+        });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+        JobId id(42);
+        Job job(id, "PrintName", EPriority::Normal, []() {return Success{};});
+        queue.Push(std::move(job));
+    }
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0], JobId(42));
 }
