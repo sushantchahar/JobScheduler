@@ -61,6 +61,7 @@ add_executable(Tests
     tests/JobQueueTest.cpp
     tests/SchedulerTest.cpp
     tests/WorkerPoolTest.cpp
+    tests/SchedulerConcurrencyTest.cpp
 )
 
 # Link test executable with library and GTest
