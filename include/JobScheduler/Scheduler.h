@@ -11,6 +11,8 @@
 #include <JobScheduler/JobHandle.h>
 #include <functional>
 #include <string>
+#include <mutex>
+#include <JobScheduler/WorkerPool.h>
 
 struct SubmitSpecs
 {
@@ -33,14 +35,18 @@ private:
     };
 
     JobQueue jobQueue;
+    // SchedulerMutex will guard the idcounter and records
     uint64_t JobIdCounter = 0;
     std::unordered_map<JobId, Record> records;
+    mutable std::mutex SchedulerMutex;
+    WorkerPool workerPool;
 
-    static Result<Success> RunJob(Job& job);
     [[nodiscard]] const Record& FindRecord(JobId id) const;
+    void OnJobStarted(JobId id);
+    void OnJobFinished(JobId id, EJobState state, Result<Success> result);
 
 public:
-    Scheduler() = default;
+    explicit Scheduler(std::size_t workerscount = 0);
     Scheduler(const Scheduler&) = delete;
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler(Scheduler&&) = delete;

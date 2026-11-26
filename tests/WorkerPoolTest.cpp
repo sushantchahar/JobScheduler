@@ -3,6 +3,9 @@
 #include <JobScheduler/Job.h>
 #include <JobScheduler/JobId.h>
 #include <JobScheduler/EPriority.h>
+#include <JobScheduler/Result.h>
+#include <JobScheduler/Success.h>
+#include <JobScheduler/EJobState.h>
 #include <latch>
 #include <atomic>
 #include <functional>
@@ -28,7 +31,7 @@ TEST(WorkerPoolTest, RunAllJobsOnWorkers)
         WorkerPool pool(queue,
         4,
         [&started](JobId) {started++;},
-        [&finished, &done](JobId, Result<Success>) {finished++; done.count_down();}
+        [&finished, &done](JobId, EJobState, Result<Success>) {finished++; done.count_down();}
         );
 
         done.wait();
@@ -43,6 +46,6 @@ TEST(WorkerPoolTest, DestroysCleanlyWhenIdle)
 {
     JobQueue queue;
     {
-        WorkerPool pool(queue, 4, [](JobId) {}, [](JobId, Result<Success>) {});
+        WorkerPool pool(queue, 4, [](JobId) {}, [](JobId, EJobState, Result<Success>) {});
     }
 }

@@ -1,11 +1,11 @@
 #include <JobScheduler/WorkerPool.h>
+#include <JobScheduler/JobExecution.h>
 
 WorkerPool::WorkerPool(JobQueue& queue, size_t WorkersCount, StartCallback onStart, FinishCallback onFinish) :
 jobQueue(queue),
 OnStart(onStart),
 OnFinish(onFinish)
 {
-    assert(WorkersCount > 0);
     workers.reserve(WorkersCount);
     for (size_t i = 0; i < WorkersCount; ++i)
     {
@@ -28,7 +28,8 @@ void WorkerPool::WorkerLoop(std::stop_token token)
 
         assert(job.TryTransition(EJobState::Running));
         OnStart(id);
-        Result<Success> result = job.Invoke();
-        OnFinish(id, std::move(result));
+        Result<Success> result = JobExecuter::RunJobSafely(job);
+        job.Complete(result);
+        OnFinish(id, job.GetState(), std::move(result));
     }
 }

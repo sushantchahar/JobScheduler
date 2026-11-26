@@ -1,33 +1,33 @@
 #include <JobScheduler/Scheduler.h>
 #include <JobScheduler/JobQueue.h>
+#include <JobScheduler/JobExecution.h>
+#include <JobScheduler/WorkerPool.h>
 #include <cassert>
+
+Scheduler::Scheduler(std::size_t workerscount) :
+workerPool(
+    jobQueue,
+    workerscount,
+    [this](JobId id) {OnJobStarted(id);},
+    [this](JobId id, EJobState state, Result<Success> result) {OnJobFinished(id, state, std::move(result));}
+    )
+{}
 
 Result<JobHandle> Scheduler::Submit(SubmitSpecs specs)
 {
     if (!specs.Callable) return Error{EErrorCode::InvalidArgument, "Callable cannot be empty"};
-    JobId id(JobIdCounter++);
-    Job job(id, std::move(specs.Name), specs.Priority, std::move(specs.Callable));
+    JobId id(0);
+    {
+        std::lock_guard<std::mutex> lock(SchedulerMutex);
+        id = JobId(JobIdCounter++);
+        records.emplace(id, Record());
+    }
 
+    Job job(id, std::move(specs.Name), specs.Priority, std::move(specs.Callable));
     JobHandle handle(job.GetId(), *this);
-    records.emplace(id, Record());
     jobQueue.Push(std::move(job));
 
     return handle;
-}
-
-Result<Success> Scheduler::RunJob(Job& job)
-{
-    try
-    {
-        return job.Invoke();
-    } catch (const std::exception& e)
-    {
-        return Error(EErrorCode::Exception, e.what());
-    }
-    catch (...)
-    {
-        return Error(EErrorCode::Exception, "Unknown exception");
-    }
 }
 
 const Scheduler::Record& Scheduler::FindRecord(JobId id) const
@@ -38,22 +38,37 @@ const Scheduler::Record& Scheduler::FindRecord(JobId id) const
     return it->second;
 }
 
+void Scheduler::OnJobStarted(JobId id)
+{
+    std::lock_guard<std::mutex> lock(SchedulerMutex);
+    auto it = records.find(id);
+    assert(it != records.end());
+    assert(it->second.State == EJobState::Pending);
+    it->second.State = EJobState::Running;
+}
+
+void Scheduler::OnJobFinished(JobId id, EJobState state, Result<Success> result)
+{
+    std::lock_guard<std::mutex> lock(SchedulerMutex);
+    auto it = records.find(id);
+    assert(it != records.end());
+    it->second.State = state;
+    it->second.Outcome = std::move(result);
+}
+
 bool Scheduler::RunNext()
 {
+    assert(workerPool.WorkersCount() == 0);
     auto job = jobQueue.TryPop();
     if (!job) return false;
 
     [[maybe_unused]] const bool IsMoved = job->TryTransition(EJobState::Running);
     assert(IsMoved);
-    auto it = records.find(job->GetId());
-    assert(it != records.end());
+    OnJobStarted(job->GetId());
 
-    Record& record = it->second;
-    record.State = EJobState::Running;
-    const Result<Success> result = RunJob(*job);
+    const Result<Success> result = JobExecuter::RunJobSafely(*job);
     job->Complete(result);
-    record.State = job->GetState();
-    record.Outcome = job->GetOutcome();
+    OnJobFinished(job->GetId(), job->GetState(), result);
     return true;
 }
 

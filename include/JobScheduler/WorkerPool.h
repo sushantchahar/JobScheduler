@@ -13,7 +13,7 @@
 class WorkerPool
 {
     using StartCallback = std::function<void(JobId id)>;
-    using FinishCallback = std::function<void(JobId, Result<Success>)>;
+    using FinishCallback = std::function<void(JobId, EJobState, Result<Success>)>;
 
 private:
     void WorkerLoop(std::stop_token token);
@@ -27,6 +27,7 @@ public:
     WorkerPool(JobQueue& queue, size_t WorkersCount, StartCallback onStart, FinishCallback onFinish);
     WorkerPool(const WorkerPool&) = delete;
     WorkerPool& operator=(const WorkerPool&) = delete;
+    [[nodiscard]] std::size_t WorkersCount() const {return workers.size();}
 };
 
 #endif //JOBSCHEDULER_WORKERPOOL_H
