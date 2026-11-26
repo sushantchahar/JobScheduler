@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <mutex>
 #include <condition_variable>
+#include <stop_token>
 
 struct Entry
 {
@@ -32,7 +33,7 @@ private:
     std::vector<Entry> Heap;
     uint64_t NextSequence = 0;
     mutable std::mutex QueueMutex;
-    std::condition_variable QueueCondition;
+    std::condition_variable_any QueueCondition;
 
     std::optional<Job> PopLocked();
 
@@ -40,6 +41,7 @@ public:
     void Push(Job&& job);
     std::optional<Job> TryPop();
     std::optional<Job> Pop();
+    std::optional<Job> Pop(std::stop_token token);
     [[nodiscard]] std::size_t Size() const;
     [[nodiscard]] bool Empty() const;
 };

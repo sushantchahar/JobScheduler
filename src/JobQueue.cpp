@@ -37,6 +37,16 @@ std::optional<Job> JobQueue::Pop()
     return PopLocked();
 }
 
+std::optional<Job> JobQueue::Pop(std::stop_token token)
+{
+    std::unique_lock<std::mutex> lock(QueueMutex);
+    if (!QueueCondition.wait(lock, token, [this]() { return !Heap.empty(); }))
+    {
+        return std::nullopt;
+    }
+    return PopLocked();
+}
+
 std::size_t JobQueue::Size() const
 {
     std::lock_guard<std::mutex> lock(QueueMutex);
