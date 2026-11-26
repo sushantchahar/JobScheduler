@@ -30,8 +30,9 @@ Result<JobHandle> Scheduler::Submit(SubmitSpecs specs)
     return handle;
 }
 
-const Scheduler::Record& Scheduler::FindRecord(JobId id) const
+Scheduler::Record Scheduler::FindRecord(JobId id) const
 {
+    std::lock_guard<std::mutex> lock(SchedulerMutex);
     auto it = records.find(id);
     assert(it != records.end());
 

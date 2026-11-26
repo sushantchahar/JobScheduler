@@ -41,7 +41,7 @@ private:
     mutable std::mutex SchedulerMutex;
     WorkerPool workerPool;
 
-    [[nodiscard]] const Record& FindRecord(JobId id) const;
+    [[nodiscard]] Record FindRecord(JobId id) const;
     void OnJobStarted(JobId id);
     void OnJobFinished(JobId id, EJobState state, Result<Success> result);
 
