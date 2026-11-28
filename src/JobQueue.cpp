@@ -40,7 +40,8 @@ std::optional<Job> JobQueue::Pop()
 std::optional<Job> JobQueue::Pop(std::stop_token token)
 {
     std::unique_lock<std::mutex> lock(QueueMutex);
-    if (!QueueCondition.wait(lock, token, [this]() { return !Heap.empty(); }))
+    const bool HasJob = QueueCondition.wait(lock, token, [this]() { return !Heap.empty(); });
+    if (!HasJob || token.stop_requested())
     {
         return std::nullopt;
     }

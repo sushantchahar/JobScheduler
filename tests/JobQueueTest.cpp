@@ -4,6 +4,9 @@
 #include <thread>
 #include <chrono>
 #include <set>
+#include <stop_token>
+#include <atomic>
+#include <functional>
 
 TEST(JobQueueTest, EmptyQueue)
 {
@@ -307,4 +310,39 @@ TEST(JobQueueConcurrencyTest, PopWakesWhenJobIsPushed)
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_EQ(result[0], JobId(42));
+}
+
+TEST(JobQueueConcurrencyTest, StopWinsOverPendingJob)
+{
+    JobQueue queue;
+    JobId id(1);
+    std::function<Result<Success>()> callable = []() { return Success{}; };
+    Job job(id, "PrintName", EPriority::Normal, callable);
+
+    queue.Push(std::move(job));
+
+    std::stop_source source;
+    source.request_stop();
+    auto result = queue.Pop(source.get_token());
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(queue.Size(), 1u);
+}
+
+TEST(JobQueueConcurrencyTest, StopWakesSleepingPop)
+{
+    JobQueue queue;
+    std::stop_source source;
+    std::atomic<bool> returnedEmpty{false};
+
+    {
+        std::jthread consumer([&queue, &returnedEmpty, token = source.get_token()]()
+        {
+            returnedEmpty = !queue.Pop(token).has_value();
+        });
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        source.request_stop();
+    }
+
+    EXPECT_TRUE(returnedEmpty);
 }
