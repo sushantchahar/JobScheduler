@@ -28,6 +28,8 @@ public:
     WorkerPool(const WorkerPool&) = delete;
     WorkerPool& operator=(const WorkerPool&) = delete;
     [[nodiscard]] std::size_t WorkersCount() const {return workers.size();}
+    void Stop();
+    ~WorkerPool();
 };
 
 #endif //JOBSCHEDULER_WORKERPOOL_H

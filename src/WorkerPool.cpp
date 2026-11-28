@@ -16,6 +16,11 @@ OnFinish(onFinish)
     }
 }
 
+WorkerPool::~WorkerPool()
+{
+    Stop();
+}
+
 void WorkerPool::WorkerLoop(std::stop_token token)
 {
     while (true)
@@ -32,5 +37,18 @@ void WorkerPool::WorkerLoop(std::stop_token token)
         Result<Success> result = JobExecuter::RunJobSafely(job);
         job.Complete(result);
         OnFinish(id, job.GetState(), std::move(result));
+    }
+}
+
+void WorkerPool::Stop()
+{
+    for (auto& worker : workers)
+    {
+        worker.request_stop();
+    }
+
+    for (auto& worker : workers)
+    {
+        if (worker.joinable()) {worker.join();}
     }
 }
