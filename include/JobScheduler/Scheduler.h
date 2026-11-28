@@ -39,6 +39,8 @@ private:
     uint64_t JobIdCounter = 0;
     std::unordered_map<JobId, Record> records;
     mutable std::mutex SchedulerMutex;
+    bool ShuttingDown = false;
+    std::mutex ShutDownMutex;
     WorkerPool workerPool;
 
     [[nodiscard]] Record FindRecord(JobId id) const;
@@ -53,6 +55,8 @@ public:
     Scheduler& operator=(Scheduler&&) = delete;
     bool RunNext();
     size_t RunAll();
+    ~Scheduler();
+    void ShutDown();
 
     Result<JobHandle> Submit(SubmitSpecs specs);
 };

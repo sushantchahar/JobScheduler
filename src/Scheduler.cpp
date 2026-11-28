@@ -2,7 +2,9 @@
 #include <JobScheduler/JobQueue.h>
 #include <JobScheduler/JobExecution.h>
 #include <JobScheduler/WorkerPool.h>
+#include <JobScheduler/JobId.h>
 #include <cassert>
+#include <vector>
 
 Scheduler::Scheduler(std::size_t workerscount) :
 workerPool(
@@ -13,9 +15,15 @@ workerPool(
     )
 {}
 
+Scheduler::~Scheduler()
+{
+    ShutDown();
+}
+
 Result<JobHandle> Scheduler::Submit(SubmitSpecs specs)
 {
     if (!specs.Callable) return Error{EErrorCode::InvalidArgument, "Callable cannot be empty"};
+    if (ShuttingDown) return Error{EErrorCode::SchedulerStopped, "Scheduler is shut down"};
     JobId id(0);
     {
         std::lock_guard<std::mutex> lock(SchedulerMutex);
@@ -82,4 +90,30 @@ size_t Scheduler::RunAll()
     }
 
     return ExecutedJobCounter;
+}
+
+void Scheduler::ShutDown()
+{
+    std::lock_guard<std::mutex> shutdownmutext(ShutDownMutex);
+
+    {
+        std::lock_guard<std::mutex> lock(SchedulerMutex);
+        ShuttingDown = true;
+    }
+
+    workerPool.Stop();
+
+    std::vector<JobId> dropped;
+    while (auto job = jobQueue.TryPop())
+    {
+        dropped.push_back(job->GetId());
+    }
+
+    std::lock_guard<std::mutex> lock(SchedulerMutex);
+    for (const JobId& id : dropped)
+    {
+        auto it = records.find(id);
+        assert(it != records.end());
+        it->second.State = EJobState::Cancelled;
+    }
 }

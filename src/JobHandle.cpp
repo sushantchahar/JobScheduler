@@ -10,7 +10,9 @@ EJobState JobHandle::State() const
 bool JobHandle::IsFinished() const
 {
     auto record = scheduler->FindRecord(id);
-    return record.Outcome.has_value();
+    return record.State == EJobState::Succeeded ||
+        record.State == EJobState::Failed ||
+        record.State == EJobState::Cancelled;
 }
 
 std::optional<Result<Success>> JobHandle::Outcome() const
