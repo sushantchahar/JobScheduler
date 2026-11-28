@@ -26,7 +26,8 @@ void WorkerPool::WorkerLoop(std::stop_token token)
         Job job = std::move(*next);
         const JobId id = job.GetId();
 
-        assert(job.TryTransition(EJobState::Running));
+        [[maybe_unused]] const bool toRunning = job.TryTransition(EJobState::Running);
+        assert(toRunning);
         OnStart(id);
         Result<Success> result = JobExecuter::RunJobSafely(job);
         job.Complete(result);

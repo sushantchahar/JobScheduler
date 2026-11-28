@@ -37,7 +37,7 @@ TEST(SchedulerConcurrencyTest, WorkersRunAllSubmittedJobs)
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         ASSERT_TRUE(handle.IsFinished());
-        EXPECT_TRUE(handle.State() == EJobState::Succeeded);
+        EXPECT_EQ(handle.State(), EJobState::Succeeded);
     }
 
     EXPECT_EQ(ran, JOBS);
@@ -90,7 +90,7 @@ TEST(SchedulerConcurrencyTest, ConcurrentSubmitGivesUniqueIds)
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         ASSERT_TRUE(handle.IsFinished());
-        EXPECT_TRUE(handle.State() == EJobState::Succeeded);
+        EXPECT_EQ(handle.State(), EJobState::Succeeded);
     }
 
     std::unordered_set<JobId> ids;
